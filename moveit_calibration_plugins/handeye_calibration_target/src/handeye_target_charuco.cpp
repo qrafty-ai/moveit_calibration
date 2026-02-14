@@ -149,12 +149,13 @@ bool HandEyeCharucoTarget::createTargetImage(cv::Mat& image) const
   try
   {
     // Create target
-    cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(dictionary_id_);
-    cv::Ptr<cv::aruco::CharucoBoard> board = cv::aruco::CharucoBoard::create(
-        squares_x_, squares_y_, float(square_size_pixels_), float(marker_size_pixels_), dictionary);
+    cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(dictionary_id_);
+    cv::aruco::CharucoBoard board(cv::Size(squares_x_, squares_y_), float(square_size_pixels_),
+                                  float(marker_size_pixels_), dictionary);
 
     // Create target image
-    board->draw(image_size, image, margin_size_pixels_, border_size_bits_);
+    cv::aruco::drawPlanarBoard(cv::makePtr<cv::aruco::CharucoBoard>(board), image_size, image, margin_size_pixels_,
+                               border_size_bits_);
   }
   catch (const cv::Exception& e)
   {
@@ -174,10 +175,9 @@ bool HandEyeCharucoTarget::detectTargetPose(cv::Mat& image)
   {
     // Detect aruco board
     charuco_mutex_.lock();
-    cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(dictionary_id_);
+    cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(dictionary_id_);
     float square_size_meters = board_size_meters_ / std::max(squares_x_, squares_y_);
-    cv::Ptr<cv::aruco::CharucoBoard> board =
-        cv::aruco::CharucoBoard::create(squares_x_, squares_y_, square_size_meters, marker_size_meters_, dictionary);
+    cv::aruco::CharucoBoard board(cv::Size(squares_x_, squares_y_), square_size_meters, marker_size_meters_, dictionary);
     charuco_mutex_.unlock();
     cv::Ptr<cv::aruco::DetectorParameters> params_ptr(new cv::aruco::DetectorParameters());
 #if CV_MAJOR_VERSION == 3 && CV_MINOR_VERSION == 2
@@ -188,7 +188,8 @@ bool HandEyeCharucoTarget::detectTargetPose(cv::Mat& image)
 
     std::vector<int> marker_ids;
     std::vector<std::vector<cv::Point2f>> marker_corners;
-    cv::aruco::detectMarkers(image, dictionary, marker_corners, marker_ids, params_ptr);
+    cv::aruco::detectMarkers(image, cv::makePtr<cv::aruco::Dictionary>(dictionary), marker_corners, marker_ids,
+                             params_ptr);
     if (marker_ids.empty())
     {
       RCLCPP_DEBUG_STREAM_THROTTLE(LOGGER_CALIBRATION_TARGET, clock, 1,
@@ -199,12 +200,13 @@ bool HandEyeCharucoTarget::detectTargetPose(cv::Mat& image)
     // Find ChArUco corners
     std::vector<cv::Point2f> charuco_corners;
     std::vector<int> charuco_ids;
-    cv::aruco::interpolateCornersCharuco(marker_corners, marker_ids, image, board, charuco_corners, charuco_ids,
-                                         camera_matrix_, distortion_coeffs_);
+    cv::aruco::interpolateCornersCharuco(marker_corners, marker_ids, image, cv::makePtr<cv::aruco::CharucoBoard>(board),
+                                         charuco_corners, charuco_ids, camera_matrix_, distortion_coeffs_);
 
     // Estimate aruco board pose
-    bool valid = cv::aruco::estimatePoseCharucoBoard(charuco_corners, charuco_ids, board, camera_matrix_,
-                                                     distortion_coeffs_, rotation_vect_, translation_vect_);
+    bool valid =
+        cv::aruco::estimatePoseCharucoBoard(charuco_corners, charuco_ids, cv::makePtr<cv::aruco::CharucoBoard>(board),
+                                            camera_matrix_, distortion_coeffs_, rotation_vect_, translation_vect_);
 
     // Draw the markers and frame axis if at least one marker is detected
     if (!valid)
