@@ -36,7 +36,7 @@
 
 #include <fstream>
 #include <gtest/gtest.h>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include <moveit/handeye_calibration_solver/handeye_solver_base.h>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>

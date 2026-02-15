@@ -39,7 +39,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <moveit/utils/moveit_error_code.hpp>
 
-
 namespace moveit_rviz_plugin
 {
 const std::string LOGNAME = "handeye_control_widget";
@@ -109,10 +108,8 @@ ControlTabWidget::ControlTabWidget(rclcpp::Node::SharedPtr node, HandEyeCalibrat
   , planning_res_(ControlTabWidget::SUCCESS)
 
   , node_(node)
-  , tf_buffer_(std::make_shared<tf2_ros::Buffer>(
-    std::make_shared<rclcpp::Clock>(RCL_ROS_TIME),
-    static_cast<tf2::Duration>(tf2::BUFFER_CORE_DEFAULT_CACHE_TIME),
-    node_))
+  , tf_buffer_(std::make_shared<tf2_ros::Buffer>(std::make_shared<rclcpp::Clock>(RCL_ROS_TIME),
+                                                 static_cast<tf2::Duration>(tf2::BUFFER_CORE_DEFAULT_CACHE_TIME), node_))
   , tf_listener_(*tf_buffer_, node_)
 
   , solver_plugins_loader_(nullptr)
@@ -754,6 +751,11 @@ void ControlTabWidget::planningGroupNameChanged(const QString& text)
   }
 }
 
+void ControlTabWidget::planningGroupNamespaceChanged()
+{
+  fillPlanningGroupNameComboBox();
+}
+
 void ControlTabWidget::setGroupName(const std::string& group_name)
 {
   if (move_group_ && move_group_->getName() == group_name)
@@ -780,7 +782,8 @@ void ControlTabWidget::setGroupName(const std::string& group_name)
 void ControlTabWidget::fillPlanningGroupNameComboBox()
 {
   group_name_->clear();
-  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(node_, "robot_description","planning_scene_monitor"));
+  planning_scene_monitor_.reset(
+      new planning_scene_monitor::PlanningSceneMonitor(node_, "robot_description", "planning_scene_monitor"));
   if (planning_scene_monitor_)
   {
     planning_scene_monitor_->startSceneMonitor(calibration_display_->planning_scene_topic_property_->getStdString());
@@ -1079,7 +1082,7 @@ void ControlTabWidget::computePlan()
     start_state.reset(new moveit::core::RobotState(ps->getCurrentState()));
 
   // Plan motion to the recorded joint state target
-if (auto_progress_->getValue() < static_cast<int>(joint_states_.size()))
+  if (auto_progress_->getValue() < static_cast<int>(joint_states_.size()))
   {
     move_group_->setStartState(*start_state);
     move_group_->setJointValueTarget(joint_states_[auto_progress_->getValue()]);

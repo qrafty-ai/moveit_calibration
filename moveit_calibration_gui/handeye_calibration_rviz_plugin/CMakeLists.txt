@@ -33,7 +33,12 @@ add_definitions(-DQT_NO_KEYWORDS)
 # Core library
 # TODO: Remove headers from moveit_handeye_calibration_rviz_plugin library compilation
 add_library(${MOVEIT_LIB_NAME}_core SHARED ${SOURCE_FILES_CORE} ${HEADERS})
-set_target_properties(${MOVEIT_LIB_NAME}_core PROPERTIES VERSION "${${PROJECT_NAME}_VERSION}")
+set_target_properties(${MOVEIT_LIB_NAME}_core PROPERTIES
+  VERSION "${${PROJECT_NAME}_VERSION}"
+  BUILD_RPATH "\$ORIGIN"
+  INSTALL_RPATH "\$ORIGIN"
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
 target_link_libraries(${MOVEIT_LIB_NAME}_core ${OpenCV_LIBS})
 target_include_directories(${MOVEIT_LIB_NAME}_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -45,7 +50,12 @@ ament_target_dependencies(
 
 # Plugin library
 add_library(${MOVEIT_LIB_NAME} SHARED ${SOURCE_FILES_PLUGINS})
-set_target_properties(${MOVEIT_LIB_NAME} PROPERTIES VERSION "${${PROJECT_NAME}_VERSION}")
+set_target_properties(${MOVEIT_LIB_NAME} PROPERTIES
+  VERSION "${${PROJECT_NAME}_VERSION}"
+  BUILD_RPATH "\$ORIGIN"
+  INSTALL_RPATH "\$ORIGIN"
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+)
 target_link_libraries(${MOVEIT_LIB_NAME} ${MOVEIT_LIB_NAME}_core)
 target_include_directories(${MOVEIT_LIB_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -68,5 +78,5 @@ ament_export_include_directories(
   include
 )
 ament_export_libraries(
-  {MOVEIT_LIB_NAME}_core {MOVEIT_LIB_NAME}
+  ${MOVEIT_LIB_NAME}_core ${MOVEIT_LIB_NAME}
 )
